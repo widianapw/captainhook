@@ -101,6 +101,29 @@
 		if ($debug)
 		print_r($result);
     }
+
+    function send_sticker($chatid,$fileid)
+	{
+		global $debug;
+		
+		$data = array(
+			
+			'chat_id' => $chatid,
+			'sticker' => $fileid,
+		);
+		
+		$options = array(
+			'http' => array(
+				'header' => "Content-type: application/x-www-form-urlencodedrn",
+				'method' => 'POST',
+				'content' => http_build_query($data),
+			),
+		);
+		$context = stream_context_create($options);
+		$result = file_get_contents(request_url('sendSticker'), false, $context);
+		if ($debug)
+		print_r($result);
+    }
     
 	while(true)	{
 		global $koneksi;
@@ -128,6 +151,12 @@
 
 			elseif ($row["type"] == 'file') {
 				send_document($chat_id);
+				mysqli_query($koneksi, "UPDATE tb_outbox set flag = '2',tgl = NOW() where id_outbox = $id_outbox");
+			}
+
+			elseif ($row["type"] == 'stc') {
+				$file_id = $row["out_msg"];
+				send_sticker($chat_id, $file_id);
 				mysqli_query($koneksi, "UPDATE tb_outbox set flag = '2',tgl = NOW() where id_outbox = $id_outbox");
 			}
         }
