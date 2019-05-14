@@ -124,10 +124,83 @@
 		if ($debug)
 		print_r($result);
     }
+
+    function send_contact($chatid)
+	{
+		global $debug;
+		
+		$data = array(
+			
+			'chat_id' => $chatid,
+			'first_name' => 'Widiana Putra',
+			'phone_number' => '+6282146456432',
+		);
+		
+		$options = array(
+			'http' => array(
+				'header' => "Content-type: application/x-www-form-urlencodedrn",
+				'method' => 'POST',
+				'content' => http_build_query($data),
+			),
+		);
+		$context = stream_context_create($options);
+		$result = file_get_contents(request_url('sendContact'), false, $context);
+		if ($debug)
+		print_r($result);
+    }
+
+    function send_video($chatid,$fileid)
+	{
+		global $debug;
+		
+		$data = array(
+			
+			'chat_id' => $chatid,
+			'video' => $fileid,
+			
+		);
+		
+		$options = array(
+			'http' => array(
+				'header' => "Content-type: application/x-www-form-urlencodedrn",
+				'method' => 'POST',
+				'content' => http_build_query($data),
+			),
+		);
+		$context = stream_context_create($options);
+		$result = file_get_contents(request_url('sendVideo'), false, $context);
+		if ($debug)
+		print_r($result);
+    }
+
+    function send_voice($chatid,$fileid)
+	{
+		global $debug;
+		
+		$data = array(
+			
+			'chat_id' => $chatid,
+			'voice' => $fileid,
+			
+		);
+		
+		$options = array(
+			'http' => array(
+				'header' => "Content-type: application/x-www-form-urlencodedrn",
+				'method' => 'POST',
+				'content' => http_build_query($data),
+			),
+		);
+		$context = stream_context_create($options);
+		$result = file_get_contents(request_url('sendVoice'), false, $context);
+		if ($debug)
+		print_r($result);
+    }
+
     
 	while(true)	{
 		global $koneksi;
-    $result = mysqli_query($koneksi, "SELECT *FROM tb_outbox WHERE flag = '1'");
+    	$result = mysqli_query($koneksi, "SELECT *FROM tb_outbox WHERE flag = '1'");
 		while ( $row = mysqli_fetch_assoc($result)) {
 			echo "-";
 			$id_outbox = $row["id_outbox"];
@@ -159,6 +232,30 @@
 				send_sticker($chat_id, $file_id);
 				mysqli_query($koneksi, "UPDATE tb_outbox set flag = '2',tgl = NOW() where id_outbox = $id_outbox");
 			}
+
+			elseif ($row["type"] == 'ctc') {
+				send_contact($chat_id);
+				mysqli_query($koneksi, "UPDATE tb_outbox set flag = '2',tgl = NOW() where id_outbox = $id_outbox");
+			}
+
+			elseif ($row["type"] == 'vdo') {
+				$file_id = $row["out_msg"];
+				send_video($chat_id,$file_id);
+				mysqli_query($koneksi, "UPDATE tb_outbox set flag = '2',tgl = NOW() where id_outbox = $id_outbox");
+			}
+
+			elseif ($row["type"] == 'vic') {
+				$file_id = $row["out_msg"];
+				send_voice($chat_id,$file_id);
+				mysqli_query($koneksi, "UPDATE tb_outbox set flag = '2',tgl = NOW() where id_outbox = $id_outbox");
+			}
+
+			elseif ($row["type"] == 'unk'){
+				$text = "Format Pesan Belum Diketahui";
+				send_reply($chat_id, $text);
+				mysqli_query($koneksi, "UPDATE tb_outbox set flag = '2',tgl = NOW() where id_outbox = $id_outbox");
+			}
+
         }
 	}
 	
